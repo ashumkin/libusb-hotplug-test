@@ -1,3 +1,4 @@
+// vim: set shiftwidth=4 tabstop=4 expandtab:
 #include <stdio.h>
 #include <stdlib.h>
 // #include <libusb.h>
@@ -22,6 +23,13 @@ int hotplug_callback(struct libusb_context *ctx, struct libusb_device *dev,
     rc = libusb_open(dev, &handle);
     if (LIBUSB_SUCCESS == rc) {
       printf("USB device opened\n");
+      char buff[256];
+      int err = libusb_get_string_descriptor_ascii(handle, desc.iSerialNumber, buff, sizeof(buff));
+      if (err > 0) {
+        printf("Serial is: %s\n", buff);
+      } else {
+        printf("Couldn't get serial string (error: %d)\n", err);
+      }
     } else {
       printf("Could not open USB device\n");
     }
@@ -50,7 +58,7 @@ int main (void) {
   signal(SIGINT, signal_handler);
   libusb_init(NULL);
   rc = libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED |
-                                        LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, 0, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
+                                        LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, LIBUSB_HOTPLUG_ENUMERATE, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
                                         LIBUSB_HOTPLUG_MATCH_ANY, hotplug_callback, NULL,
                                         &handle);
   if (LIBUSB_SUCCESS != rc) {
