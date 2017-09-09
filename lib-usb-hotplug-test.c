@@ -5,39 +5,49 @@
 #include "libusb-1.0/libusb.h"
 #include <unistd.h>
 #include <signal.h>
+#include <pthread.h>
 
 static int interrupted = 0;
 
-int hotplug_callback(struct libusb_context *ctx, struct libusb_device *dev,
-                     libusb_hotplug_event event, void *user_data) {
-  static libusb_device_handle *handle = NULL;
+void *usb_device_attached(void *vargp) {
+  libusb_device_handle *handle = NULL;
+  struct libusb_device *dev = (libusb_device *) vargp;
   struct libusb_device_descriptor desc;
-  int rc;
   (void)libusb_get_device_descriptor(dev, &desc);
   printf("Size: %d; class: %d; subclass: %d; VID: %x; PID: %x\n", \
       desc.bLength, desc.bDeviceClass, desc.bDeviceSubClass, \
       desc.idVendor, desc.idProduct);
+  int rc;
+  rc = libusb_open(dev, &handle);
+  if (LIBUSB_SUCCESS == rc) {
+    printf("USB device opened\n");
+    char buff[256];
+    int err = libusb_get_string_descriptor_ascii(handle, desc.iSerialNumber, buff, sizeof(buff));
+    if (err > 0) {
+      printf("Serial is: %s\n", buff);
+    } else {
+      printf("Couldn't get serial string (error: %d)\n", err);
+    }
+  } else {
+    printf("Could not open USB device\n");
+  }
+  if (handle) {
+    libusb_close(handle);
+    handle = NULL;
+  }
+}
+
+int hotplug_callback(struct libusb_context *ctx, struct libusb_device *dev,
+                     libusb_hotplug_event event, void *user_data) {
+  struct libusb_device_descriptor desc;
+  (void)libusb_get_device_descriptor(dev, &desc);
   if (LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED == event) {
     printf("USB device plugged\n");
-    rc = libusb_open(dev, &handle);
-    if (LIBUSB_SUCCESS == rc) {
-      printf("USB device opened\n");
-      char buff[256];
-      int err = libusb_get_string_descriptor_ascii(handle, desc.iSerialNumber, buff, sizeof(buff));
-      if (err > 0) {
-        printf("Serial is: %s\n", buff);
-      } else {
-        printf("Couldn't get serial string (error: %d)\n", err);
-      }
-    } else {
-      printf("Could not open USB device\n");
-    }
+    printf("Starting thread...\n");
+    pthread_t thread_id;
+    pthread_create(&thread_id, NULL, usb_device_attached, dev);
   } else if (LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT == event) {
     printf("USB device unplugged\n");
-    if (handle) {
-      libusb_close(handle);
-      handle = NULL;
-    }
   } else {
     printf("Unhandled event %d\n", event);
   }
