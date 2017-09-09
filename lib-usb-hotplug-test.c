@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-static int count = 0;
 static int interrupted = 0;
 
 int hotplug_callback(struct libusb_context *ctx, struct libusb_device *dev,
@@ -42,7 +41,6 @@ int hotplug_callback(struct libusb_context *ctx, struct libusb_device *dev,
   } else {
     printf("Unhandled event %d\n", event);
   }
-  count++;
   return 0;
 }
 
