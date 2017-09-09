@@ -1,4 +1,4 @@
-// vim: set shiftwidth=4 tabstop=4 expandtab:
+// vim: set shiftwidth=2 tabstop=2 expandtab:
 #include <stdio.h>
 #include <stdlib.h>
 // #include <libusb.h>
