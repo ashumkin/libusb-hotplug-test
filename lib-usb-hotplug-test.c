@@ -55,6 +55,7 @@ int main (void) {
   int rc;
   signal(SIGINT, signal_handler);
   libusb_init(NULL);
+  printf("LibUSB version: %d.%d.%d.%d\n", libusb_get_version()->major, libusb_get_version()->minor, libusb_get_version()->micro, libusb_get_version()->nano);
   rc = libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED |
                                         LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, LIBUSB_HOTPLUG_ENUMERATE, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
                                         LIBUSB_HOTPLUG_MATCH_ANY, hotplug_callback, NULL,
